@@ -37,7 +37,7 @@ const Todos = () => {
               </span>
             </div>
           </div>
-          <div className="py-16 border-t border-t-[#333]">
+          <div className="py-16 border-t border-t-[#333] flex flex-col w-full gap-3">
             {todos && todos.length
               ? todos.map((todo, index) => {
                   return <TodoTile key={index} todo={todo} />;
