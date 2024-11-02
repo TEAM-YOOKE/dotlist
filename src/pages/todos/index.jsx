@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import TodoTile from "../../components/TodoTile";
 import AddTodo from "../../components/AddTodo";
 import logo from "../../assets/logo.svg";
 import logoText from "../../assets/logotext.svg";
-import { TODOS } from "../../constants";
 import EmptyTodos from "../../components/EmptyTodos";
 import { useDispatch, useSelector } from "react-redux";
 import toast from "react-hot-toast";
@@ -18,12 +17,15 @@ import { getAuth, signOut } from "firebase/auth";
 import { FaSignOutAlt, FaUser } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { updateTodoStatus, deleteTodo, addTodo } from "../../dbFunctions";
+import TodoTileSkeleton from "../../components/TodoTileSkeleton";
+
+const skeletons = [1, 2, 3];
 
 const Todos = () => {
   const { user } = useSelector((state) => ({ ...state }));
   const [todos, setTodos] = useState([]);
   const [loading, setLoading] = useState(false);
-
+  const [updateLoading, setUpdateLoading] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -75,29 +77,36 @@ const Todos = () => {
   const completedCount = todos.filter((todo) => todo.completed).length;
 
   const handleUpdateTodo = async (userId, todoId, isCompleted) => {
-    setLoading(true);
+    setUpdateLoading(true);
     try {
-      await updateTodoStatus(userId, todoId, isCompleted);
+      const updatedTodo = await updateTodoStatus(userId, todoId, isCompleted);
       toast.success("Todo successfully updated!");
-      await fetchTodos();
+      console.log(updatedTodo);
+      setTodos((prev) => {
+        const index = prev.findIndex((item) => item.id === todoId);
+        const todo = prev.find((t) => t.id === todoId);
+        return prev.with(index, { ...todo, completed: isCompleted });
+      });
     } catch (error) {
       console.error("Error updating todo", error);
       toast.error("Error updating todo");
     } finally {
-      setLoading(false);
+      setUpdateLoading(false);
     }
   };
   const handleDeleteTodo = async (todoId) => {
-    setLoading(true);
-    try {
-      await deleteTodo(todoId);
-      toast.success("Todo successfully deleted");
-      await fetchTodos();
-    } catch (error) {
-      console.error("Error deleting todo", error);
-      toast.error("Error deleting todo");
-    } finally {
-      setLoading(false);
+    if (window.confirm("Are you sure you want to delete todo?")) {
+      setLoading(true);
+      try {
+        await deleteTodo(todoId);
+        toast.success("Todo successfully deleted");
+        await fetchTodos();
+      } catch (error) {
+        console.error("Error deleting todo", error);
+        toast.error("Error deleting todo");
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -149,12 +158,16 @@ const Todos = () => {
             <div className="flex gap-2 items-center">
               <h4 className="text-[#7b7dec] ">Concluídas</h4>
               <span className="bg-[#333] px-2 py-[2px] text-white font-bold text-xs rounded-full">
-                {completedCount} 0
+                {completedCount}
               </span>
             </div>
           </div>
           <div className="py-16 border-t border-t-[#333] flex flex-col w-full gap-3">
-            {todos && todos.length ? (
+            {loading ? (
+              skeletons.map((s, i) => {
+                return <TodoTileSkeleton key={i} />;
+              })
+            ) : todos && todos.length ? (
               todos.map((todo, index) => {
                 return (
                   <TodoTile
@@ -162,6 +175,7 @@ const Todos = () => {
                     todo={todo}
                     updateTodoStatus={handleUpdateTodo}
                     deleteTodo={handleDeleteTodo}
+                    updateLoading={updateLoading}
                   />
                 );
               })
