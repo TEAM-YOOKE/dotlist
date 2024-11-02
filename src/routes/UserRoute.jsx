@@ -4,7 +4,7 @@ import LoadingToRedirect from "./LoadingToRedirect";
 
 const UserRoute = ({ children }) => {
   const { user } = useSelector((state) => ({ ...state }));
-  return (user && user?.role === "user") || user?.role === "vendor" ? (
+  return user ? (
     <div>{children}</div>
   ) : (
     <LoadingToRedirect to="/" message="You are not logged in." />

@@ -21,7 +21,7 @@ const LoadingToRedirect = (props) => {
         <p className="font-bold text-3xl">{props.message}</p>
         <p className="font-bold text-3xl">
           redirecting in{" "}
-          <span className="text-red-700">{count + " second(s)"}</span>
+          <span className="text-[#7b7dec]">{count + " second(s)"}</span>
         </p>
       </div>
     </div>
