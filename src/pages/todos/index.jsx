@@ -26,6 +26,7 @@ const Todos = () => {
   const [todos, setTodos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
+  const [addLoading, setAddLoading] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -111,7 +112,7 @@ const Todos = () => {
   };
 
   const handleTodoAdd = async (title, description, completed, userId) => {
-    setLoading(true);
+    setAddLoading(true);
     try {
       await addTodo(title, description, completed, userId);
       toast.success("Todo added successfully");
@@ -120,7 +121,7 @@ const Todos = () => {
       console.error("Error adding todo", error);
       toast.error("Error adding todo");
     } finally {
-      setLoading(false);
+      setAddLoading(false);
     }
   };
 
@@ -145,7 +146,7 @@ const Todos = () => {
         <img src={logoText} alt="Logo" />
       </div>
       <div className="w-[736px] mx-auto">
-        <AddTodo addTodo={handleTodoAdd} />
+        <AddTodo addTodo={handleTodoAdd} loading={addLoading} />
         <div className=" flex flex-col gap-6">
           <div className="flex w-full justify-between text-sm font-bold">
             <div className="flex gap-2 items-center">
