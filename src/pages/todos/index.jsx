@@ -18,7 +18,7 @@ import { FaSignOutAlt, FaUser } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { updateTodoStatus, deleteTodo, addTodo } from "../../dbFunctions";
 import TodoTileSkeleton from "../../components/TodoTileSkeleton";
-
+import { motion, AnimatePresence } from "framer-motion";
 const skeletons = [1, 2, 3];
 
 const Todos = () => {
@@ -28,6 +28,7 @@ const Todos = () => {
   const [updateLoading, setUpdateLoading] = useState(false);
   const [addLoading, setAddLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [completedCount, setCompletedCount] = useState(0);
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -75,8 +76,11 @@ const Todos = () => {
     }
   };
 
+  useEffect(() => {
+    setCompletedCount((prev) => todos?.filter((todo) => todo.completed).length);
+  }, [todos]);
   // Count Completed Todos
-  const completedCount = todos.filter((todo) => todo.completed).length;
+  // const completedCount = todos.filter((todo) => todo.completed).length;
 
   const handleUpdateTodo = async (userId, todoId, isCompleted) => {
     setUpdateLoading(true);
@@ -117,7 +121,10 @@ const Todos = () => {
     try {
       await addTodo(title, description, completed, userId);
       toast.success("Todo added successfully");
-      await fetchTodos();
+      const newTodos = todos;
+      newTodos.unshift({ title, description, completed, userId });
+      setTodos(newTodos);
+      // await fetchTodos();
     } catch (error) {
       console.error("Error adding todo", error);
       toast.error("Error adding todo");
@@ -151,7 +158,7 @@ const Todos = () => {
       </div>
 
       {/* Main content area */}
-      <div className="w-full px-4 sm:w-[736px] sm:mx-auto">
+      <div className="w-full px-4 max-w-[736px] sm:mx-auto">
         <AddTodo addTodo={handleTodoAdd} loading={addLoading} />
 
         <div className="flex flex-col gap-4 sm:gap-6">
@@ -176,16 +183,26 @@ const Todos = () => {
             {loading ? (
               skeletons.map((s, i) => <TodoTileSkeleton key={i} />)
             ) : todos && todos.length ? (
-              todos.map((todo, index) => (
-                <TodoTile
-                  key={index}
-                  todo={todo}
-                  updateTodoStatus={handleUpdateTodo}
-                  deleteTodo={handleDeleteTodo}
-                  updateLoading={updateLoading}
-                  deleteLoading={deleteLoading}
-                />
-              ))
+              <AnimatePresence>
+                {todos.map((todo, index) => (
+                  <motion.div
+                    key={todo.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <TodoTile
+                      key={index}
+                      todo={todo}
+                      updateTodoStatus={handleUpdateTodo}
+                      deleteTodo={handleDeleteTodo}
+                      updateLoading={updateLoading}
+                      deleteLoading={deleteLoading}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             ) : (
               <EmptyTodos />
             )}
