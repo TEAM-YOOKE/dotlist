@@ -4,6 +4,8 @@ import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../../firebase";
 import toast from "react-hot-toast";
+import logo from "../../assets/logo.svg";
+import logoText from "../../assets/logotext.svg";
 import googleLogo from "../../assets/googleLogo.svg";
 import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
 
@@ -81,19 +83,26 @@ const Login = () => {
   };
 
   return (
-    <div className="login-container flex flex-col items-center justify-center h-screen">
-      <h2 className="text-2xl text-white font-semibold mb-6">Login</h2>
+    <div className="flex flex-col w-full justify-center gap-40 mt-32 align-middle items-center">
+      <div className="flex  justify-center align-middle items-center  ">
+        <img src={logo} alt="Logo" />
+        <img src={logoText} alt="Logo" />
+      </div>
 
-      <form onSubmit={googleSignIn} className="flex flex-col items-center">
-        <button
-          type="submit"
-          className="flex items-center gap-2 text-white hover:bg-blue-700 border-2 border-gray-500 rounded-full px-6 py-3 transition-all duration-200"
-          disabled={loading}
-        >
-          <img src={googleLogo} alt="Google Logo" className="w-10 h-10" />
-          {loading ? "Loading..." : "Continue with Google"}
-        </button>
-      </form>
+      <div className="login-container flex flex-col gap-4 items-center justify-center">
+        <h2 className="text-2xl text-white font-semibold">Login</h2>
+
+        <form onSubmit={googleSignIn} className="flex flex-col items-center">
+          <button
+            type="submit"
+            className="flex items-center gap-2 text-white hover:bg-blue-700 border-2 border-gray-500 rounded-full px-6 py-3 transition-all duration-200"
+            disabled={loading}
+          >
+            <img src={googleLogo} alt="Google Logo" className="w-10 h-10" />
+            {loading ? "Loading..." : "Continue with Google"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 };
