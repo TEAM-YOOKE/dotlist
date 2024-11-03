@@ -27,6 +27,7 @@ const Todos = () => {
   const [loading, setLoading] = useState(false);
   const [updateLoading, setUpdateLoading] = useState(false);
   const [addLoading, setAddLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -97,16 +98,16 @@ const Todos = () => {
   };
   const handleDeleteTodo = async (todoId) => {
     if (window.confirm("Are you sure you want to delete todo?")) {
-      setLoading(true);
+      setDeleteLoading(true);
       try {
         await deleteTodo(todoId);
         toast.success("Todo successfully deleted");
-        await fetchTodos();
+        setTodos((prev) => prev.filter((item) => item.id !== todoId));
       } catch (error) {
         console.error("Error deleting todo", error);
         toast.error("Error deleting todo");
       } finally {
-        setLoading(false);
+        setDeleteLoading(false);
       }
     }
   };
@@ -126,60 +127,65 @@ const Todos = () => {
   };
 
   return (
-    <div className="w-screen">
-      <div className="flex justify-between  bg-[#0d0d0d] align-middle items-center pt-5 px-5">
-        <div className="flex items-center gap-2 px-4 py-2  text-white rounded-md hover:bg-[#555]">
+    <div className="w-full">
+      {/* Header section */}
+      <div className="flex justify-between bg-[#0d0d0d] items-center p-4 sm:pt-5 sm:px-5">
+        <div className="flex items-center gap-2 px-3 py-2 text-white rounded-md hover:bg-[#555] text-sm sm:px-4 sm:py-2">
           <FaUser />
-          {user.name || user.name}
+          {user.name}
         </div>
         <button
           onClick={handleFirebaseLogout}
-          className="flex items-center gap-2 px-4 py-2 bg-[#333] text-white rounded-md hover:bg-[#555]"
+          className="flex items-center gap-2 px-3 py-2 bg-[#333] text-white rounded-md hover:bg-[#555] text-sm sm:px-4 sm:py-2"
           disabled={loading}
         >
           <FaSignOutAlt />
           Logout
         </button>
       </div>
-      <div className=" h-[200px] w-screen bg-[#0d0d0d] flex  justify-center align-middle items-center gap-3">
-        <img src={logo} alt="Logo" />
-        <img src={logoText} alt="Logo" />
+
+      {/* Logo section */}
+      <div className="h-[150px] w-full bg-[#0d0d0d] flex justify-center items-center gap-3 sm:h-[200px]">
+        <img src={logo} alt="Logo" className="sm:w-auto" />
+        <img src={logoText} alt="Logo Text" className=" sm:w-auto" />
       </div>
-      <div className="w-[736px] mx-auto">
+
+      {/* Main content area */}
+      <div className="w-full px-4 sm:w-[736px] sm:mx-auto">
         <AddTodo addTodo={handleTodoAdd} loading={addLoading} />
-        <div className=" flex flex-col gap-6">
-          <div className="flex w-full justify-between text-sm font-bold">
+
+        <div className="flex flex-col gap-4 sm:gap-6">
+          {/* Todos Summary */}
+          <div className="flex justify-between text-xs font-bold sm:text-sm">
             <div className="flex gap-2 items-center">
-              <h4 className="text-[#4ea8de] ">Tarefas criadas</h4>
+              <h4 className="text-[#4ea8de]">Tarefas criadas</h4>
               <span className="bg-[#333] px-2 py-[2px] text-white font-bold text-xs rounded-full">
                 {todos.length}
               </span>
             </div>
-
             <div className="flex gap-2 items-center">
-              <h4 className="text-[#7b7dec] ">Concluídas</h4>
+              <h4 className="text-[#7b7dec]">Concluídas</h4>
               <span className="bg-[#333] px-2 py-[2px] text-white font-bold text-xs rounded-full">
                 {completedCount}
               </span>
             </div>
           </div>
-          <div className="py-16 border-t border-t-[#333] flex flex-col w-full gap-3">
+
+          {/* Todos List */}
+          <div className="py-8 border-t border-t-[#333] flex flex-col w-full gap-3 sm:py-16">
             {loading ? (
-              skeletons.map((s, i) => {
-                return <TodoTileSkeleton key={i} />;
-              })
+              skeletons.map((s, i) => <TodoTileSkeleton key={i} />)
             ) : todos && todos.length ? (
-              todos.map((todo, index) => {
-                return (
-                  <TodoTile
-                    key={index}
-                    todo={todo}
-                    updateTodoStatus={handleUpdateTodo}
-                    deleteTodo={handleDeleteTodo}
-                    updateLoading={updateLoading}
-                  />
-                );
-              })
+              todos.map((todo, index) => (
+                <TodoTile
+                  key={index}
+                  todo={todo}
+                  updateTodoStatus={handleUpdateTodo}
+                  deleteTodo={handleDeleteTodo}
+                  updateLoading={updateLoading}
+                  deleteLoading={deleteLoading}
+                />
+              ))
             ) : (
               <EmptyTodos />
             )}
