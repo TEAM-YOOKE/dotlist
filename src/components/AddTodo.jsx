@@ -4,17 +4,20 @@ import { useSelector } from "react-redux";
 
 function AddTodo({ addTodo, loading }) {
   const [task, setTask] = useState("");
+  const [deadline, setDeadline] = useState(""); // New state for deadline
   const { user } = useSelector((state) => ({ ...state }));
 
   const handleCreateTask = (e) => {
     e.preventDefault();
-    if (task.trim()) {
+    if (task.trim() && deadline) {
+      // Ensure deadline is set
       const title = task;
       const description = "todo";
       const completed = false;
       const userId = user.id;
-      addTodo(title, description, completed, userId);
-      setTask(""); // Clear the input field after adding the task
+      addTodo(title, description, completed, userId, deadline);
+      setTask(""); // Clear task input
+      setDeadline(""); // Clear deadline input
     }
   };
 
@@ -30,6 +33,13 @@ function AddTodo({ addTodo, loading }) {
         value={task} // Bind input to task state
         onChange={(e) => setTask(e.target.value)} // Update task state on input change
         className="flex-1 p-2 text-white bg-[#262626] placeholder-[#808080] rounded-md outline-none focus:ring-2 focus:ring-blue-500 h-[54px]"
+      />
+      <input
+        type="datetime-local" // Input type for date and time
+        name="deadline"
+        value={deadline} // Bind input to deadline state
+        onChange={(e) => setDeadline(e.target.value)} // Update deadline state on input change
+        className="p-2 text-white bg-[#262626] placeholder-[#808080] rounded-md outline-none focus:ring-2 focus:ring-blue-500 h-[54px]"
       />
       <button
         type="submit"
