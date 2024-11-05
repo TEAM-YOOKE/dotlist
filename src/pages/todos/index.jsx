@@ -116,13 +116,13 @@ const Todos = () => {
     }
   };
 
-  const handleTodoAdd = async (title, description, completed, userId) => {
+  const handleTodoAdd = async (title, description, completed, userId, deadline) => {
     setAddLoading(true);
     try {
-      await addTodo(title, description, completed, userId);
+      await addTodo(title, description, completed, userId, deadline);
       toast.success("Todo added successfully");
       const newTodos = todos;
-      newTodos.unshift({ title, description, completed, userId });
+      newTodos.unshift({ title, description, completed, userId, deadline });
       setTodos(newTodos);
       // await fetchTodos();
     } catch (error) {
