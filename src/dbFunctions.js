@@ -51,7 +51,7 @@ const deleteTodo = async (todoId) => {
   }
 };
 
-const addTodo = async (title, description, completed = false, userId) => {
+const addTodo = async (title, description, completed = false, userId, deadline) => {
   try {
     // Reference to the todos collection in Firestore
     const todosCollectionRef = collection(db, "todos");
@@ -62,6 +62,7 @@ const addTodo = async (title, description, completed = false, userId) => {
       description,
       completed,
       userId,
+      deadline
     });
 
     console.log("Todo added successfully with ID:", docRef.id);
