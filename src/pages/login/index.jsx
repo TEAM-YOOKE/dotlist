@@ -8,6 +8,8 @@ import logo from "../../assets/logo.svg";
 import logoText from "../../assets/logotext.svg";
 import googleLogo from "../../assets/googleLogo.svg";
 import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
+import { messaging } from "../../firebase";
+import { getToken } from "firebase/messaging";
 
 const db = getFirestore(); // Initialize Firestore outside of component
 
@@ -17,6 +19,27 @@ const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const provider = new GoogleAuthProvider();
+  const [token, setToken] = useState("");
+
+  // Request Notification Permission
+  const requestNotificationPermission = async () => {
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const usertoken = await getToken(messaging, {
+        vapidKey: "BK9YG8e3kW5iiPOwVcSPzpJdwa2yFI0rPW34pAM7WktVQmyt1OKmMEo925pQBmVeDU_OSi0NXHhnS68jR8ge5fc",
+        serviceWorkerRegistration: registration,
+      });
+      if (usertoken) {
+        console.log("Token:", usertoken);
+        setToken(usertoken);
+        return usertoken; // Return the token
+      } else {
+        console.log("No registration token available.");
+      }
+    } catch (error) {
+      console.error("Error retrieving token", error);
+    }
+  };
 
   // Redirect if already logged in
   useEffect(() => {
@@ -27,12 +50,16 @@ const Login = () => {
   const googleSignIn = async (e) => {
     e.preventDefault();
     setLoading(true);
+
+    // Get notification token first
+    const userToken = await requestNotificationPermission();
+
     try {
       const result = await signInWithPopup(auth, provider);
       const { user } = result;
 
       if (user) {
-        handleUserLogin(user);
+        handleUserLogin(user, userToken); // Pass token as a parameter
         navigate("/todos");
       }
     } catch (error) {
@@ -43,7 +70,7 @@ const Login = () => {
   };
 
   // Handle user login by saving user data to state and Firestore
-  const handleUserLogin = async (user) => {
+  const handleUserLogin = async (user, userToken) => {
     const userDoc = doc(db, "users", user.uid);
     const userSnap = await getDoc(userDoc);
 
@@ -52,8 +79,9 @@ const Login = () => {
         email: user.email,
         name: user.displayName,
         id: user.uid,
-        token: user.accessToken,
+        authToken: user.accessToken,
         todos: [],
+        token: userToken, // Save token here
       });
       console.log("User saved to Firestore");
     } else {
@@ -67,7 +95,7 @@ const Login = () => {
         email: user.email,
         name: user.displayName,
         id: user.uid,
-        token: user.accessToken,
+        authToken: user.accessToken,
       },
     });
     toast.success(`Welcome ${user.displayName}`);
@@ -84,7 +112,7 @@ const Login = () => {
 
   return (
     <div className="flex flex-col w-full justify-center gap-40 mt-32 align-middle items-center">
-      <div className="flex  justify-center align-middle items-center  ">
+      <div className="flex justify-center align-middle items-center">
         <img src={logo} alt="Logo" />
         <img src={logoText} alt="Logo" />
       </div>
