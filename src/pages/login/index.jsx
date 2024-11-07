@@ -19,37 +19,32 @@ const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const provider = new GoogleAuthProvider();
-  const [token, setToken] = useState("");
-
-  // Request Notification Permission
-  const requestNotificationPermission = async (userId) => {
-    try {
-      const registration = await navigator.serviceWorker.ready;
-      const usertoken = await getToken(messaging, {
-        vapidKey: "BK9YG8e3kW5iiPOwVcSPzpJdwa2yFI0rPW34pAM7WktVQmyt1OKmMEo925pQBmVeDU_OSi0NXHhnS68jR8ge5fc",
-        serviceWorkerRegistration: registration,
-      });
-      if (usertoken) {
-        console.log("Token:", usertoken);
-        setToken(usertoken);
-        return usertoken; // Return the token
-      } else {
-        console.log("No registration token available.");
-      }
-    } catch (error) {
-      console.error("Error retrieving token", error);
-    }
-  };
 
   // Redirect if already logged in
   useEffect(() => {
     if (user) navigate("/todos");
-
   }, [user, navigate]);
 
-
-
-  
+  // Request Notification Permission and Get Token
+  const requestNotificationPermission = async () => {
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const userToken = await getToken(messaging, {
+        vapidKey: "BK9YG8e3kW5iiPOwVcSPzpJdwa2yFI0rPW34pAM7WktVQmyt1OKmMEo925pQBmVeDU_OSi0NXHhnS68jR8ge5fc",
+        serviceWorkerRegistration: registration,
+      });
+      if (userToken) {
+        console.log("Notification Token:", userToken);
+        return userToken; // Return token if available
+      } else {
+        console.log("No registration token available.");
+        return null;
+      }
+    } catch (error) {
+      console.error("Error retrieving token", error);
+      return null;
+    }
+  };
 
   // Handle user login by saving user data to state and Firestore
   const handleUserLogin = async (user, userToken) => {
@@ -88,14 +83,13 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
 
-    // Get notification token first
-    const userToken = await requestNotificationPermission();
-
     try {
       const result = await signInWithPopup(auth, provider);
       const { user } = result;
 
       if (user) {
+        // Get notification token only after successful login
+        const userToken = await requestNotificationPermission();
         await handleUserLogin(user, userToken); // Pass token as a parameter
         navigate("/todos");
       }
