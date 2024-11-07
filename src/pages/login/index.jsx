@@ -22,7 +22,7 @@ const Login = () => {
   const [token, setToken] = useState("");
 
   // Request Notification Permission
-  const requestNotificationPermission = async () => {
+  const requestNotificationPermission = async (userId) => {
     try {
       const registration = await navigator.serviceWorker.ready;
       const usertoken = await getToken(messaging, {
@@ -44,30 +44,12 @@ const Login = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (user) navigate("/todos");
+
   }, [user, navigate]);
 
-  // Firebase Google Sign-In handler
-  const googleSignIn = async (e) => {
-    e.preventDefault();
-    setLoading(true);
 
-    // Get notification token first
-    const userToken = await requestNotificationPermission();
 
-    try {
-      const result = await signInWithPopup(auth, provider);
-      const { user } = result;
-
-      if (user) {
-        handleUserLogin(user, userToken); // Pass token as a parameter
-        navigate("/todos");
-      }
-    } catch (error) {
-      handleError(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  
 
   // Handle user login by saving user data to state and Firestore
   const handleUserLogin = async (user, userToken) => {
@@ -99,6 +81,29 @@ const Login = () => {
       },
     });
     toast.success(`Welcome ${user.displayName}`);
+  };
+
+  // Firebase Google Sign-In handler
+  const googleSignIn = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    // Get notification token first
+    const userToken = await requestNotificationPermission();
+
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const { user } = result;
+
+      if (user) {
+        await handleUserLogin(user, userToken); // Pass token as a parameter
+        navigate("/todos");
+      }
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Centralized error handler
