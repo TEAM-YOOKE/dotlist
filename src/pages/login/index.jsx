@@ -89,7 +89,7 @@ const Login = () => {
 
       if (user) {
         // Get notification token only after successful login
-        const userToken = await requestNotificationPermission();
+        // const userToken = await requestNotificationPermission();
         await handleUserLogin(user, userToken); // Pass token as a parameter
         navigate("/todos");
       }
