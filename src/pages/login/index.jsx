@@ -30,7 +30,7 @@ const Login = () => {
     try {
       const registration = await navigator.serviceWorker.ready;
       const userToken = await getToken(messaging, {
-        vapidKey: "BK9YG8e3kW5iiPOwVcSPzpJdwa2yFI0rPW34pAM7WktVQmyt1OKmMEo925pQBmVeDU_OSi0NXHhnS68jR8ge5fc",
+        vapidKey: import.meta.env.VITE_vapidKey,
         serviceWorkerRegistration: registration,
       });
       if (userToken) {
@@ -57,7 +57,6 @@ const Login = () => {
         name: user.displayName,
         id: user.uid,
         authToken: user.accessToken,
-        todos: [],
         token: userToken, // Save token here
       });
       console.log("User saved to Firestore");
@@ -89,8 +88,9 @@ const Login = () => {
 
       if (user) {
         // Get notification token only after successful login
-        // const userToken = await requestNotificationPermission();
-        await handleUserLogin(user, userToken); // Pass token as a parameter
+        const userToken = await requestNotificationPermission();
+        console.log("token---->", userToken);
+        await handleUserLogin(user, userToken ); // Pass token as a parameter
         navigate("/todos");
       }
     } catch (error) {
