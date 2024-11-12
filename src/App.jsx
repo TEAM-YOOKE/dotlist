@@ -11,10 +11,46 @@ import { auth } from "./firebase";
 import { useDispatch, useSelector } from "react-redux";
 import { ToastContainer } from "react-toastify";
 import { Toaster } from "react-hot-toast";
+import { messaging } from './firebase.js';
+import { onMessage } from "firebase/messaging";
+
 function App() {
   const [user, setUser] = useState({});
   const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
+
+  
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker
+      .register(`/firebase-messaging-sw.js`)
+      .then((registration) => {
+        console.log("Service Worker registered", registration);
+        requestPermission(); // Request notification permission here
+      })
+      .catch((err) => console.error("Service Worker registration failed", err));
+  }
+  
+  // Handle foreground messages
+  onMessage(messaging, (payload) => {
+    console.log("Message received in foreground: ", payload);
+    // Display notification
+    const { title, body } = payload.notification;
+    new Notification(title, { body });
+  });
+
+// Request permission to show notifications
+const requestPermission = async () => {
+  try {
+    await Notification.requestPermission();
+    console.log("Notification permission granted.");
+  } catch (error) {
+    console.error("Unable to get permission to notify.", error);
+  }
+};
+
+useEffect(() => {
+  requestPermission();
+}, []);
 
   useEffect(() => {
     setLoading(true);

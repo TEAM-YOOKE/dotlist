@@ -85,9 +85,9 @@ const Todos = () => {
   const handleUpdateTodo = async (userId, todoId, isCompleted) => {
     setUpdateLoading(true);
     try {
-      const updatedTodo = await updateTodoStatus(userId, todoId, isCompleted);
+      await updateTodoStatus(userId, todoId, isCompleted);
       toast.success("Todo successfully updated!");
-      console.log(updatedTodo);
+   
       setTodos((prev) => {
         const index = prev.findIndex((item) => item.id === todoId);
         const todo = prev.find((t) => t.id === todoId);
@@ -121,10 +121,10 @@ const Todos = () => {
     try {
       await addTodo(title, description, completed, userId, deadline);
       toast.success("Todo added successfully");
-      const newTodos = todos;
-      newTodos.unshift({ title, description, completed, userId, deadline });
-      setTodos(newTodos);
-      // await fetchTodos();
+      // const newTodos = todos;
+      // newTodos.unshift({ title, description, completed, userId, deadline });
+      // setTodos(newTodos);
+      await fetchTodos();
     } catch (error) {
       console.error("Error adding todo", error);
       toast.error("Error adding todo");
