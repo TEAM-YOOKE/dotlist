@@ -47,35 +47,45 @@ const Login = () => {
   };
 
   // Handle user login by saving user data to state and Firestore
-  const handleUserLogin = async (user, userToken) => {
-    const userDoc = doc(db, "users", user.uid);
-    const userSnap = await getDoc(userDoc);
+  // Updated handleUserLogin to check for existing token and update if necessary
+const handleUserLogin = async (user, userToken) => {
+  const userDoc = doc(db, "users", user.uid);
+  const userSnap = await getDoc(userDoc);
 
-    if (!userSnap.exists()) {
-      await setDoc(userDoc, {
-        email: user.email,
-        name: user.displayName,
-        id: user.uid,
-        authToken: user.accessToken,
-        token: userToken, // Save token here
-      });
-      console.log("User saved to Firestore");
-    } else {
-      console.log("User already exists in Firestore");
-    }
-
-    // Dispatch user data to Redux store
-    dispatch({
-      type: "LOGGED_IN_USER",
-      payload: {
-        email: user.email,
-        name: user.displayName,
-        id: user.uid,
-        authToken: user.accessToken,
-      },
+  if (!userSnap.exists()) {
+    // Create a new document if user does not exist
+    await setDoc(userDoc, {
+      email: user.email,
+      name: user.displayName,
+      id: user.uid,
+      authToken: user.accessToken,
+      token: userToken, // Save token here
     });
-    toast.success(`Welcome ${user.displayName}`);
-  };
+    console.log("User saved to Firestore");
+  } else {
+    // If user exists, check if token needs updating
+    const existingToken = userSnap.data().token;
+    if (existingToken !== userToken) {
+      await setDoc(userDoc, { token: userToken }, { merge: true });
+      console.log("Notification token updated in Firestore");
+    } else {
+      console.log("Token already up-to-date in Firestore");
+    }
+  }
+
+  // Dispatch user data to Redux store
+  dispatch({
+    type: "LOGGED_IN_USER",
+    payload: {
+      email: user.email,
+      name: user.displayName,
+      id: user.uid,
+      authToken: user.accessToken,
+    },
+  });
+  toast.success(`Welcome ${user.displayName}`);
+};
+
 
   // Firebase Google Sign-In handler
   const googleSignIn = async (e) => {
