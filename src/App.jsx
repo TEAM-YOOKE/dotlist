@@ -31,12 +31,7 @@ function App() {
   }
   
   // Handle foreground messages
-  onMessage(messaging, (payload) => {
-    console.log("Message received in foreground: ", payload);
-    // Display notification
-    const { title, body } = payload.notification;
-    new Notification(title, { body });
-  });
+  
 
 // Request permission to show notifications
 const requestPermission = async () => {
@@ -49,6 +44,12 @@ const requestPermission = async () => {
 };
 
 useEffect(() => {
+  onMessage(messaging, (payload) => {
+    console.log("Message received in foreground: ", payload);
+    // Display notification
+    const { title, body } = payload.notification;
+    new Notification(title, { body });
+  });
   requestPermission();
 }, []);
 
