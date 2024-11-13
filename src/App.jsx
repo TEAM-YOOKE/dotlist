@@ -20,17 +20,6 @@ function App() {
   const dispatch = useDispatch();
 
   
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker
-      .register(`/firebase-messaging-sw.js`)
-      .then((registration) => {
-        console.log("Service Worker registered", registration);
-        requestPermission(); // Request notification permission here
-      })
-      .catch((err) => console.error("Service Worker registration failed", err));
-  }
-  
-  // Handle foreground messages
   
 
 // Request permission to show notifications
@@ -44,14 +33,45 @@ const requestPermission = async () => {
 };
 
 useEffect(() => {
-  onMessage(messaging, (payload) => {
+  const requestPermission = async () => {
+    if (Notification.permission !== "granted") {
+      try {
+        const permission = await Notification.requestPermission();
+        if (permission === "granted") {
+          console.log("Notification permission granted.");
+        } else {
+          console.log("Notification permission denied.");
+        }
+      } catch (error) {
+        console.error("Unable to get permission to notify.", error);
+      }
+    } else {
+      console.log("Notification permission already granted.");
+    }
+  };
+
+  requestPermission();
+
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker
+      .register(`/firebase-messaging-sw.js`)
+      .then((registration) => {
+        console.log("Service Worker registered", registration);
+      })
+      .catch((err) => console.error("Service Worker registration failed", err));
+  }
+
+  // Handle foreground messages
+  const unsubscribe = onMessage(messaging, (payload) => {
     console.log("Message received in foreground: ", payload);
-    // Display notification
     const { title, body } = payload.notification;
     new Notification(title, { body });
   });
-  requestPermission();
-}, []);
+
+  // Cleanup function to avoid memory leaks
+  return () => unsubscribe();
+}, [messaging]);
+
 
   useEffect(() => {
     setLoading(true);
