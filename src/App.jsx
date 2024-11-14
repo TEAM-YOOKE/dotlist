@@ -20,38 +20,48 @@ function App() {
   const dispatch = useDispatch();
 
   
-  
-
 // Request permission to show notifications
 const requestPermission = async () => {
-  try {
-    await Notification.requestPermission();
-    console.log("Notification permission granted.");
-  } catch (error) {
-    console.error("Unable to get permission to notify.", error);
+  if (Notification.permission !== "granted") {
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission === "granted") {
+        console.log("Notification permission granted.");
+      } else {
+        console.log("Notification permission denied.");
+      }
+    } catch (error) {
+      console.error("Unable to get permission to notify.", error);
+    }
+  } else {
+    console.log("Notification permission already granted.");
   }
 };
 
 useEffect(() => {
-  const requestPermission = async () => {
-    if (Notification.permission !== "granted") {
-      try {
-        const permission = await Notification.requestPermission();
-        if (permission === "granted") {
-          console.log("Notification permission granted.");
-        } else {
-          console.log("Notification permission denied.");
-        }
-      } catch (error) {
-        console.error("Unable to get permission to notify.", error);
-      }
-    } else {
-      console.log("Notification permission already granted.");
+  setLoading(true);
+  const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      console.log("Logged In user", user);
+      dispatch({
+        type: "LOGGED_IN_USER",
+        payload: {
+          email: user.email,
+          name: user.displayName,
+          id: user.uid,
+          token: user.accessToken,
+        },
+      });
     }
-  };
+    setLoading(false);
+  });
+  return () => unsubscribe();
+}, [dispatch]);
 
+useEffect(() => {
   requestPermission();
 
+  //Register Service Worker
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker
       .register(`/firebase-messaging-sw.js`)
@@ -73,25 +83,7 @@ useEffect(() => {
 }, [messaging]);
 
 
-  useEffect(() => {
-    setLoading(true);
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        console.log("Logged In user", user);
-        dispatch({
-          type: "LOGGED_IN_USER",
-          payload: {
-            email: user.email,
-            name: user.displayName,
-            id: user.uid,
-            token: user.accessToken,
-          },
-        });
-      }
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, [dispatch]);
+ 
 
   const [count, setCount] = useState(0);
 

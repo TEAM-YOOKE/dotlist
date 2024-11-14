@@ -59,13 +59,13 @@ const handleUserLogin = async (user, userToken) => {
       name: user.displayName,
       id: user.uid,
       authToken: user.accessToken,
-      token: userToken, // Save token here
+      token: userToken || "", // Save token here
     });
     console.log("User saved to Firestore");
   } else {
     // If user exists, check if token needs updating
     const existingToken = userSnap.data().token;
-    if (existingToken !== userToken) {
+    if (userToken && existingToken !== userToken) {
       await setDoc(userDoc, { token: userToken }, { merge: true });
       console.log("Notification token updated in Firestore");
     } else {
