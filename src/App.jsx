@@ -20,58 +20,70 @@ function App() {
   const dispatch = useDispatch();
 
   
+// Request permission to show notifications
+const requestPermission = async () => {
+  if (Notification.permission !== "granted") {
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission === "granted") {
+        console.log("Notification permission granted.");
+      } else {
+        console.log("Notification permission denied.");
+      }
+    } catch (error) {
+      console.error("Unable to get permission to notify.", error);
+    }
+  } else {
+    console.log("Notification permission already granted.");
+  }
+};
+
+useEffect(() => {
+  setLoading(true);
+  const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      console.log("Logged In user", user);
+      dispatch({
+        type: "LOGGED_IN_USER",
+        payload: {
+          email: user.email,
+          name: user.displayName,
+          id: user.uid,
+          token: user.accessToken,
+        },
+      });
+    }
+    setLoading(false);
+  });
+  return () => unsubscribe();
+}, [dispatch]);
+
+useEffect(() => {
+  requestPermission();
+
+  //Register Service Worker
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker
       .register(`/firebase-messaging-sw.js`)
       .then((registration) => {
         console.log("Service Worker registered", registration);
-        requestPermission(); // Request notification permission here
       })
       .catch((err) => console.error("Service Worker registration failed", err));
   }
-  
+
   // Handle foreground messages
-  
-
-// Request permission to show notifications
-const requestPermission = async () => {
-  try {
-    await Notification.requestPermission();
-    console.log("Notification permission granted.");
-  } catch (error) {
-    console.error("Unable to get permission to notify.", error);
-  }
-};
-
-useEffect(() => {
-  onMessage(messaging, (payload) => {
+  const unsubscribe = onMessage(messaging, (payload) => {
     console.log("Message received in foreground: ", payload);
-    // Display notification
     const { title, body } = payload.notification;
     new Notification(title, { body });
   });
-  requestPermission();
-}, []);
 
-  useEffect(() => {
-    setLoading(true);
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        console.log("Logged In user", user);
-        dispatch({
-          type: "LOGGED_IN_USER",
-          payload: {
-            email: user.email,
-            name: user.displayName,
-            id: user.uid,
-            token: user.accessToken,
-          },
-        });
-      }
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, [dispatch]);
+  // Cleanup function to avoid memory leaks
+  return () => unsubscribe();
+}, [messaging]);
+
+
+ 
 
   const [count, setCount] = useState(0);
 
