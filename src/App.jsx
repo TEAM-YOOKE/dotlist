@@ -1,6 +1,4 @@
-import { useEffect, useState } from "react";
-import reactLogo from "./assets/react.svg";
-import viteLogo from "/vite.svg";
+import { useEffect, useState, useCallback } from "react";
 import "./App.css";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Login from "./pages/login";
@@ -8,84 +6,86 @@ import UserRoute from "./routes/UserRoute";
 import Todos from "./pages/todos";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase";
-import { useDispatch, useSelector } from "react-redux";
-import { ToastContainer } from "react-toastify";
+import { useDispatch } from "react-redux";
 import { Toaster } from "react-hot-toast";
-import { messaging } from './firebase.js';
+import { messaging } from "./firebase.js";
 import { onMessage } from "firebase/messaging";
 
 function App() {
-  const [user, setUser] = useState({});
   const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
 
-  
-// Request permission to show notifications
-const requestPermission = async () => {
-  if (Notification.permission !== "granted") {
+  // Request permission to show notifications
+  const requestPermission = useCallback(async () => {
     try {
-      const permission = await Notification.requestPermission();
-      if (permission === "granted") {
-        console.log("Notification permission granted.");
+      if (Notification.permission !== "granted") {
+        const permission = await Notification.requestPermission();
+        console.log(`Notification permission: ${permission}`);
       } else {
-        console.log("Notification permission denied.");
+        console.log("Notification permission already granted.");
       }
     } catch (error) {
-      console.error("Unable to get permission to notify.", error);
+      console.error("Unable to get notification permission:", error);
     }
-  } else {
-    console.log("Notification permission already granted.");
-  }
-};
+  }, []);
 
-useEffect(() => {
-  setLoading(true);
-  const unsubscribe = onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      console.log("Logged In user", user);
-      dispatch({
-        type: "LOGGED_IN_USER",
-        payload: {
-          email: user.email,
-          name: user.displayName,
-          id: user.uid,
-          token: user.accessToken,
-        },
-      });
+  // Handle Auth State Changes
+  useEffect(() => {
+    setLoading(true);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log("Logged In user", user);
+        dispatch({
+          type: "LOGGED_IN_USER",
+          payload: {
+            email: user.email,
+            name: user.displayName,
+            id: user.uid,
+            token: user.accessToken,
+          },
+        });
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe(); // Cleanup on unmount
+  }, [dispatch]);
+
+  // Setup Notifications and Service Worker
+  useEffect(() => {
+    requestPermission();
+
+    // Register Service Worker
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .getRegistration("/firebase-messaging-sw.js")
+        .then((registration) => {
+          if (!registration) {
+            navigator.serviceWorker
+              .register(`/firebase-messaging-sw.js`)
+              .then((registration) =>
+                console.log("Service Worker registered:", registration)
+              )
+              .catch((err) =>
+                console.error("Service Worker registration failed:", err)
+              );
+          } else {
+            console.log("Service Worker already registered.");
+          }
+        });
     }
-    setLoading(false);
-  });
-  return () => unsubscribe();
-}, [dispatch]);
 
-useEffect(() => {
-  requestPermission();
+    // Handle foreground messages
+    const unsubscribe = onMessage(messaging, (payload) => {
+      console.log("Message received in foreground:", payload);
+      const { title, body } = payload.notification;
+      if (title && body) {
+        new Notification(title, { body });
+      }
+    });
 
-  //Register Service Worker
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker
-      .register(`/firebase-messaging-sw.js`)
-      .then((registration) => {
-        console.log("Service Worker registered", registration);
-      })
-      .catch((err) => console.error("Service Worker registration failed", err));
-  }
-
-  // Handle foreground messages
-  const unsubscribe = onMessage(messaging, (payload) => {
-    console.log("Message received in foreground: ", payload);
-    const { title, body } = payload.notification;
-    new Notification(title, { body });
-  });
-
-  // Cleanup function to avoid memory leaks
-  return () => unsubscribe();
-}, [messaging]);
-
-
- 
-
-  const [count, setCount] = useState(0);
+    return () => unsubscribe(); // Cleanup listener on unmount
+  }, [requestPermission]);
 
   const router = createBrowserRouter([
     {
