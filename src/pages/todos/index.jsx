@@ -79,15 +79,13 @@ const Todos = () => {
   useEffect(() => {
     setCompletedCount((prev) => todos?.filter((todo) => todo.completed).length);
   }, [todos]);
-  // Count Completed Todos
-  // const completedCount = todos.filter((todo) => todo.completed).length;
 
   const handleUpdateTodo = async (userId, todoId, isCompleted) => {
     setUpdateLoading(true);
     try {
       await updateTodoStatus(userId, todoId, isCompleted);
       toast.success("Todo successfully updated!");
-   
+
       setTodos((prev) => {
         const index = prev.findIndex((item) => item.id === todoId);
         const todo = prev.find((t) => t.id === todoId);
@@ -116,7 +114,13 @@ const Todos = () => {
     }
   };
 
-  const handleTodoAdd = async (title, description, completed, userId, deadline) => {
+  const handleTodoAdd = async (
+    title,
+    description,
+    completed,
+    userId,
+    deadline
+  ) => {
     setAddLoading(true);
     try {
       await addTodo(title, description, completed, userId, deadline);
